@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <cassert>
 #include <unistd.h>
 #include <folly/FBString.h>
 #include <librdkafka/rdkafkacpp.h>
@@ -38,9 +37,13 @@ void process_chunk(folly::fbstring &chunk,
 }
 
 int main(int argc, char **argv) {
-  assert(argc == 3);
-  std::string file_name(argv[1]);
-  std::string topic_name(argv[2]);
+  if (argc != 4) {
+    std::cerr << "Usage: ./kafka_fill [file_name] [topic_name] [broker_addr]\n";
+    return 1;
+  }
+  const std::string file_name(argv[1]);
+  const std::string topic_name(argv[2]);
+  const std::string broker_addr(argv[3]);
 
   int page_size = getpagesize();
   char *buf = new char[page_size];
@@ -52,7 +55,7 @@ int main(int argc, char **argv) {
   auto *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   auto *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 
-  auto status = conf->set("metadata.broker.list", "localhost:9092", err);
+  auto status = conf->set("metadata.broker.list", broker_addr, err);
   if (status != RdKafka::Conf::CONF_OK) {
     throw std::runtime_error(err);
   }
@@ -87,4 +90,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
